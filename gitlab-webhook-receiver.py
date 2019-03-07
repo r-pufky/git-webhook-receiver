@@ -29,8 +29,16 @@ CONFIG_BACKGROUND = 'background'
 JSON_PROJECT = 'project'
 JSON_PROJECT_NAME = 'name'
 
+
 class ReceiverHeader(object):
-  """ Encapsulate processed received headers. """
+  """ Encapsulate processed received headers.
+
+  Attributes:
+    token: String request token.
+    payload: Filehandle like object containing all JSON header content.
+    project: String project name for update.
+    params: Dictionary of parsed JSON header content.
+  """
 
   def __init__(self):
     """ Initialize recieved headers. """
@@ -40,6 +48,22 @@ class ReceiverHeader(object):
     self.params = {}
 
 
+class ProjectConfig(object):
+  """ Composed config object.
+
+  Attributes:
+    command: String command to execute.
+    token: String authorized token.
+    foreground: Boolean True if command should be executed in the foreground.
+  """
+
+  def __init__(self):
+    """ Initialize config. """
+    self.command = None
+    self.token = None
+    self.foreground = False
+
+
 class RequestHandler(BaseHTTPRequestHandler):
   """A POST request handler."""
 
@@ -47,7 +71,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     """ Parse JSON headers.
 
     Returns:
+      ReceiverHeader object containing parsed headers.
 
+    Raises:
+      KeyError: if project name cannot be parsed from received headers.
     """
     headers = ReceiverHeader()
     headers.token = self.headers[HEADER_TOKEN]
@@ -64,24 +91,34 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     return headers
 
-  # Attributes (only if a config YAML is used)
-  # command, gitlab_token, foreground
-  def get_info_from_config(self, project, config):
-    # get command and token from config file
-    self.command = config[project][CONFIG_COMMAND]
-    self.gitlab_token = config[project][CONFIG_TOKEN]
-    self.foreground = CONFIG_BACKGROUND in config[project] and not config[project][CONFIG_BACKGROUND]
-    logging.info('Load project %s and run command %s.', project, self.command)
+  def ParseConfig(self, project):
+    """ Parse config file for specific project.
 
-  def do_token_mgmt(self, request_token, json_payload):
-    # Check if the gitlab token is valid
-    if request_token == self.gitlab_token:
-      logging.info('Start executing %s' % self.command)
+    Args:
+      project: String requested project.
+
+    Returns:
+      ProjectConfig object containing parsed configuration data for project.
+    """
+    project_config = ProjectConfig()
+    project_config.command = config[project][CONFIG_COMMAND]
+    project_config.token = config[project][CONFIG_TOKEN]
+    project_config.foreground = (CONFIG_BACKGROUND in config[project] and
+                                 not config[project][CONFIG_BACKGROUND])
+    logging.info('Loaded project %s and run command %s.',
+                 project,
+                 project_config.command)
+    return project_config
+
+  def ProcessRequest(self, headers):
+    """ Process request and execute command. """
+    project_config = self.ParseConfig(headers.project)
+
+    if headers.token == project_config.token:
+      logging.info('Start executing %s' % project_config.command)
       try:
-        # run command in background
-        p = Popen(self.command, stdin=PIPE)
-        p.stdin.write(json_payload);
-        if self.foreground:
+        p = Popen(project_config.command, stdin=PIPE)
+        if project_config.foreground:
           p.communicate()
         self.send_response(200, 'OK')
       except OSError as err:
@@ -102,8 +139,7 @@ class RequestHandler(BaseHTTPRequestHandler):
       return
 
     try:
-      self.get_info_from_config(headers.project, config)
-      self.do_token_mgmt(headers.token, headers.payload)
+      self.ProcessRequest(headers)
     except KeyError as err:
       self.send_response(500, 'KeyError')
       if err == headers.project:

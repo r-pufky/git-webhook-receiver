@@ -60,12 +60,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
   def do_POST(self):
     logging.info("Hook received")
-    # get payload
-    header_length = int(self.headers[HEADER_CONTENT_LENGTH])
-    # get gitlab secret token
     gitlab_token_header = self.headers[HEADER_TOKEN]
+    json_payload = self.rfile.read(int(self.headers[HEADER_CONTENT_LENGTH]))
 
-    json_payload = self.rfile.read(header_length)
     json_params = {}
     if len(json_payload) > 0:
       json_params = json.loads(json_payload.decode('utf-8'))

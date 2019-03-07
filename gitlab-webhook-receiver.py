@@ -163,18 +163,18 @@ def Parser():
   parser = ArgumentParser(description=__doc__,
                           formatter_class=ArgumentDefaultsHelpFormatter)
 
-  parser.add_argument('--addr',
+  parser.add_argument('-a', '--addr',
                       dest='addr',
                       default='0.0.0.0',
                       help='Address to listen on.')
-  parser.add_argument('--port',
+  parser.add_argument('-p', '--port',
                       dest='port',
                       type=int,
                       default=8666,
                       metavar='PORT',
                       help='Port to listen on.')
   group = parser.add_mutually_exclusive_group(required=True)
-  group.add_argument('--cfg',
+  group.add_argument('-c', '--cfg',
                      dest='cfg',
                      type=FileType('r'),
                      help='Path to the config file.')

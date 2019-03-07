@@ -14,6 +14,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG,
                     stream=sys.stdout)
 
+HEADER_CONTENT_LENGTH = 'Content-Length'
+HEADER_TOKEN = 'X-Gitlab-Token'
 
 class RequestHandler(BaseHTTPRequestHandler):
   """A POST request handler."""
@@ -49,9 +51,9 @@ class RequestHandler(BaseHTTPRequestHandler):
   def do_POST(self):
     logging.info("Hook received")
     # get payload
-    header_length = int(self.headers['Content-Length'])
+    header_length = int(self.headers[HEADER_CONTENT_LENGTH])
     # get gitlab secret token
-    gitlab_token_header = self.headers['X-Gitlab-Token']
+    gitlab_token_header = self.headers[HEADER_TOKEN]
 
     json_payload = self.rfile.read(header_length)
     json_params = {}

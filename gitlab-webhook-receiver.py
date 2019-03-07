@@ -1,6 +1,13 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# Config File Format:
+#
+# {GIT REPO URL}:
+#   command: String command to execute.
+#   token: String webhook repository token.
+#   background: {True|False} to run command in the background.
+
 import json
 import yaml
 from subprocess import Popen, PIPE, STDOUT

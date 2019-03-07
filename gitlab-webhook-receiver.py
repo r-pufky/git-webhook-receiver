@@ -29,8 +29,40 @@ CONFIG_BACKGROUND = 'background'
 JSON_PROJECT = 'project'
 JSON_PROJECT_NAME = 'name'
 
+class ReceiverHeader(object):
+  """ Encapsulate processed received headers. """
+
+  def __init__(self):
+    """ Initialize recieved headers. """
+    self.token = None
+    self.payload = None
+    self.project = None
+    self.params = {}
+
+
 class RequestHandler(BaseHTTPRequestHandler):
   """A POST request handler."""
+
+  def ParseHeaders(self):
+    """ Parse JSON headers.
+
+    Returns:
+
+    """
+    headers = ReceiverHeader()
+    headers.token = self.headers[HEADER_TOKEN]
+    headers.payload = self.rfile.read(int(self.headers[HEADER_CONTENT_LENGTH]))
+
+    if len(headers.payload) > 0:
+      headers.params = json.loads(headers.payload.decode('utf-8'))
+
+    try:
+      headers.project = headers.params[JSON_PROJECT][JSON_PROJECT_NAME]
+    except KeyError as err:
+      logging.error('No project provided by the JSON payload.')
+      raise
+
+    return headers
 
   # Attributes (only if a config YAML is used)
   # command, gitlab_token, foreground
@@ -39,7 +71,7 @@ class RequestHandler(BaseHTTPRequestHandler):
     self.command = config[project][CONFIG_COMMAND]
     self.gitlab_token = config[project][CONFIG_TOKEN]
     self.foreground = CONFIG_BACKGROUND in config[project] and not config[project][CONFIG_BACKGROUND]
-    logging.info('Load project %s and run command %s', project, self.command)
+    logging.info('Load project %s and run command %s.', project, self.command)
 
   def do_token_mgmt(self, request_token, json_payload):
     # Check if the gitlab token is valid
@@ -62,28 +94,20 @@ class RequestHandler(BaseHTTPRequestHandler):
 
   def do_POST(self):
     logging.info('Hook received.')
-    request_token = self.headers[HEADER_TOKEN]
-    json_payload = self.rfile.read(int(self.headers[HEADER_CONTENT_LENGTH]))
-
-    json_params = {}
-    if len(json_payload) > 0:
-      json_params = json.loads(json_payload.decode('utf-8'))
-
     try:
-      project = json_params[JSON_PROJECT][JSON_PROJECT_NAME]
+      headers = self.ParseHeaders()
     except KeyError as err:
       self.send_response(500, 'KeyError')
-      logging.error('No project provided by the JSON payload.')
       self.end_headers()
       return
 
     try:
-      self.get_info_from_config(project, config)
-      self.do_token_mgmt(request_token, json_payload)
+      self.get_info_from_config(headers.project, config)
+      self.do_token_mgmt(headers.token, headers.payload)
     except KeyError as err:
       self.send_response(500, 'KeyError')
-      if err == project:
-        logging.error('Project %s not found in %s.', project, args.cfg.name)
+      if err == headers.project:
+        logging.error('Project %s not found in %s.', headers.project, args.cfg.name)
       elif err == CONFIG_COMMAND:
         logging.error('Key %s not found in %s.', CONFIG_COMMAND, args.cfg.name)
       elif err == CONFIG_TOKEN:

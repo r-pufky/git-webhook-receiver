@@ -23,6 +23,9 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 
 HEADER_CONTENT_LENGTH = 'Content-Length'
 HEADER_TOKEN = 'X-Gitlab-Token'
+CONFIG_COMMAND = 'command'
+CONFIG_TOKEN = 'gitlab_token'
+CONFIG_BACKGROUND = 'background'
 
 class RequestHandler(BaseHTTPRequestHandler):
   """A POST request handler."""
@@ -31,9 +34,9 @@ class RequestHandler(BaseHTTPRequestHandler):
   # command, gitlab_token, foreground
   def get_info_from_config(self, project, config):
     # get command and token from config file
-    self.command = config[project]['command']
-    self.gitlab_token = config[project]['gitlab_token']
-    self.foreground = 'background' in config[project] and not config[project]['background']
+    self.command = config[project][CONFIG_COMMAND]
+    self.gitlab_token = config[project][CONFIG_TOKEN]
+    self.foreground = CONFIG_BACKGROUND in config[project] and not config[project][CONFIG_BACKGROUND]
     logging.info("Load project '%s' and run command '%s'", project, self.command)
 
   def do_token_mgmt(self, gitlab_token_header, json_payload):
@@ -83,10 +86,10 @@ class RequestHandler(BaseHTTPRequestHandler):
       self.send_response(500, "KeyError")
       if err == project:
         logging.error("Project '%s' not found in %s", project, args.cfg.name)
-      elif err == 'command':
-        logging.error("Key 'command' not found in %s", args.cfg.name)
-      elif err == 'gitlab_token':
-        logging.error("Key 'gitlab_token' not found in %s", args.cfg.name)
+      elif err == CONFIG_COMMAND:
+        logging.error("Key %s not found in %s", CONFIG_COMMAND, args.cfg.name)
+      elif err == CONFIG_TOKEN:
+        logging.error("Key %s not found in %s", CONFIG_TOKEN, args.cfg.name)
     finally:
       self.end_headers()
 

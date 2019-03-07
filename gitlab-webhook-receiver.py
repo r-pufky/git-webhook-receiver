@@ -99,12 +99,24 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     Returns:
       ProjectConfig object containing parsed configuration data for project.
+
+    Raises:
+      KeyError: If the requested key is not found in the config file.
     """
     project_config = ProjectConfig()
-    project_config.command = config[project][CONFIG_COMMAND]
-    project_config.token = config[project][CONFIG_TOKEN]
-    project_config.foreground = (CONFIG_BACKGROUND in config[project] and
-                                 not config[project][CONFIG_BACKGROUND])
+    try:
+      project_config.command = config[project][CONFIG_COMMAND]
+      project_config.token = config[project][CONFIG_TOKEN]
+      project_config.foreground = (CONFIG_BACKGROUND in config[project] and
+                                   not config[project][CONFIG_BACKGROUND])
+    except KeyError as err:
+      if err == project:
+        logging.error('Project %s not found in %s.', project, args.cfg.name)
+      elif err == CONFIG_COMMAND:
+        logging.error('Key %s not found in %s.', CONFIG_COMMAND, args.cfg.name)
+      elif err == CONFIG_TOKEN:
+        logging.error('Key %s not found in %s.', CONFIG_TOKEN, args.cfg.name)
+
     logging.info('Loaded project %s and run command %s.',
                  project,
                  project_config.command)
@@ -142,12 +154,6 @@ class RequestHandler(BaseHTTPRequestHandler):
       self.ProcessRequest(headers)
     except KeyError as err:
       self.send_response(500, 'KeyError')
-      if err == headers.project:
-        logging.error('Project %s not found in %s.', headers.project, args.cfg.name)
-      elif err == CONFIG_COMMAND:
-        logging.error('Key %s not found in %s.', CONFIG_COMMAND, args.cfg.name)
-      elif err == CONFIG_TOKEN:
-        logging.error('Key %s not found in %s.', CONFIG_TOKEN, args.cfg.name)
     finally:
       self.end_headers()
 

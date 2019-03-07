@@ -158,8 +158,8 @@ class RequestHandler(BaseHTTPRequestHandler):
       self.end_headers()
 
 
-def get_parser():
-  """Get a command line parser."""
+def Parser():
+  """Generate CLI Arguments."""
   parser = ArgumentParser(description=__doc__,
                           formatter_class=ArgumentDefaultsHelpFormatter)
 
@@ -188,8 +188,7 @@ def main(addr, port):
 
 
 if __name__ == '__main__':
-  parser = get_parser()
-  args = parser.parse_args()
+  args = Parser().parse_args()
 
   if args.cfg:
     config = yaml.load(args.cfg)

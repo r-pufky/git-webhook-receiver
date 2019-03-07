@@ -39,30 +39,30 @@ class RequestHandler(BaseHTTPRequestHandler):
     self.command = config[project][CONFIG_COMMAND]
     self.gitlab_token = config[project][CONFIG_TOKEN]
     self.foreground = CONFIG_BACKGROUND in config[project] and not config[project][CONFIG_BACKGROUND]
-    logging.info("Load project '%s' and run command '%s'", project, self.command)
+    logging.info('Load project %s and run command %s', project, self.command)
 
-  def do_token_mgmt(self, gitlab_token_header, json_payload):
+  def do_token_mgmt(self, request_token, json_payload):
     # Check if the gitlab token is valid
-    if gitlab_token_header == self.gitlab_token:
-      logging.info("Start executing '%s'" % self.command)
+    if request_token == self.gitlab_token:
+      logging.info('Start executing %s' % self.command)
       try:
         # run command in background
         p = Popen(self.command, stdin=PIPE)
         p.stdin.write(json_payload);
         if self.foreground:
           p.communicate()
-        self.send_response(200, "OK")
+        self.send_response(200, 'OK')
       except OSError as err:
-        self.send_response(500, "OSError")
-        logging.error("Command could not run successfully.")
+        self.send_response(500, 'OSError')
+        logging.error('Command could not run successfully.')
         logging.error(err)
     else:
-      logging.error("Not authorized, Gitlab_Token not authorized")
-      self.send_response(401, "Gitlab Token not authorized")
+      logging.error('Not authorized, Token not authorized.')
+      self.send_response(401, 'Token not authorized.')
 
   def do_POST(self):
-    logging.info("Hook received")
-    gitlab_token_header = self.headers[HEADER_TOKEN]
+    logging.info('Hook received.')
+    request_token = self.headers[HEADER_TOKEN]
     json_payload = self.rfile.read(int(self.headers[HEADER_CONTENT_LENGTH]))
 
     json_params = {}
@@ -70,25 +70,24 @@ class RequestHandler(BaseHTTPRequestHandler):
       json_params = json.loads(json_payload.decode('utf-8'))
 
     try:
-      # get project homepage
       project = json_params[JSON_PROJECT][JSON_PROJECT_NAME]
     except KeyError as err:
-      self.send_response(500, "KeyError")
-      logging.error("No project provided by the JSON payload")
+      self.send_response(500, 'KeyError')
+      logging.error('No project provided by the JSON payload.')
       self.end_headers()
       return
 
     try:
       self.get_info_from_config(project, config)
-      self.do_token_mgmt(gitlab_token_header, json_payload)
+      self.do_token_mgmt(request_token, json_payload)
     except KeyError as err:
-      self.send_response(500, "KeyError")
+      self.send_response(500, 'KeyError')
       if err == project:
-        logging.error("Project '%s' not found in %s", project, args.cfg.name)
+        logging.error('Project %s not found in %s.', project, args.cfg.name)
       elif err == CONFIG_COMMAND:
-        logging.error("Key %s not found in %s", CONFIG_COMMAND, args.cfg.name)
+        logging.error('Key %s not found in %s.', CONFIG_COMMAND, args.cfg.name)
       elif err == CONFIG_TOKEN:
-        logging.error("Key %s not found in %s", CONFIG_TOKEN, args.cfg.name)
+        logging.error('Key %s not found in %s.', CONFIG_TOKEN, args.cfg.name)
     finally:
       self.end_headers()
 
@@ -98,21 +97,21 @@ def get_parser():
   parser = ArgumentParser(description=__doc__,
                           formatter_class=ArgumentDefaultsHelpFormatter)
 
-  parser.add_argument("--addr",
-                      dest="addr",
-                      default="0.0.0.0",
-                      help="address where it listens")
-  parser.add_argument("--port",
-                      dest="port",
+  parser.add_argument('--addr',
+                      dest='addr',
+                      default='0.0.0.0',
+                      help='Address to listen on.')
+  parser.add_argument('--port',
+                      dest='port',
                       type=int,
                       default=8666,
-                      metavar="PORT",
-                      help="port where it listens")
+                      metavar='PORT',
+                      help='Port to listen on.')
   group = parser.add_mutually_exclusive_group(required=True)
-  group.add_argument("--cfg",
-                     dest="cfg",
+  group.add_argument('--cfg',
+                     dest='cfg',
                      type=FileType('r'),
-                     help="path to the config file")
+                     help='Path to the config file.')
   return parser
 
 

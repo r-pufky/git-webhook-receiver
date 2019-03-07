@@ -1,21 +1,12 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-""" Gitlab Webhook Receiver """
-# Based on: https://github.com/schickling/docker-hook
 
 import json
 import yaml
 from subprocess import Popen, PIPE, STDOUT
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType
-try:
-    # For Python 3.0 and later
-    from http.server import HTTPServer
-    from http.server import BaseHTTPRequestHandler
-except ImportError:
-    # Fall back to Python 2
-    from BaseHTTPServer import BaseHTTPRequestHandler
-    from BaseHTTPServer import HTTPServer as HTTPServer
+from http.server import HTTPServer
+from http.server import BaseHTTPRequestHandler
 import sys
 import logging
 
@@ -57,15 +48,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         logging.info("Hook received")
-
-        if sys.version_info >= (3,0):
-            # get payload
-            header_length = int(self.headers['Content-Length'])
-            # get gitlab secret token
-            gitlab_token_header = self.headers['X-Gitlab-Token']
-        else:
-            header_length = int(self.headers.getheader('content-length', "0"))
-            gitlab_token_header = self.headers.getheader('X-Gitlab-Token')
+        # get payload
+        header_length = int(self.headers['Content-Length'])
+        # get gitlab secret token
+        gitlab_token_header = self.headers['X-Gitlab-Token']
 
         json_payload = self.rfile.read(header_length)
         json_params = {}

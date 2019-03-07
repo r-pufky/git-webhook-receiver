@@ -26,6 +26,8 @@ HEADER_TOKEN = 'X-Gitlab-Token'
 CONFIG_COMMAND = 'command'
 CONFIG_TOKEN = 'gitlab_token'
 CONFIG_BACKGROUND = 'background'
+JSON_PROJECT = 'project'
+JSON_PROJECT_NAME = 'name'
 
 class RequestHandler(BaseHTTPRequestHandler):
   """A POST request handler."""
@@ -69,7 +71,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     try:
       # get project homepage
-      project = json_params['project']['name']
+      project = json_params[JSON_PROJECT][JSON_PROJECT_NAME]
     except KeyError as err:
       self.send_response(500, "KeyError")
       logging.error("No project provided by the JSON payload")

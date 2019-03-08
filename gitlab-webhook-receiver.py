@@ -5,7 +5,7 @@
 #
 # {GIT REPO URL}:
 #   command: String command to execute.
-#   token: String webhook repository token.
+#   secret: String webhook repository token.
 #   background: {True|False} to run command in the background.
 
 import json
@@ -178,7 +178,7 @@ def Parser():
   parser = ArgumentParser(description=__doc__,
                           formatter_class=ArgumentDefaultsHelpFormatter)
 
-  parser.add_argument('-a', '--addr',
+  parser.add_argument('-a', '--address',
                       dest='addr',
                       default='0.0.0.0',
                       help='Address to listen on.')
@@ -189,7 +189,7 @@ def Parser():
                       metavar='PORT',
                       help='Port to listen on.')
   group = parser.add_mutually_exclusive_group(required=True)
-  group.add_argument('-c', '--cfg',
+  group.add_argument('-c', '--config',
                      dest='cfg',
                      type=FileType('r'),
                      help='Path to the config file.')

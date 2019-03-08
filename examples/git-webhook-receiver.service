@@ -3,7 +3,11 @@ Description=Git Webhook Receiver
 After=network.target
 
 [Service]
-ExecStart=git-webhook-receiver.py
+User=git
+Group=git
+Type=simple
+Restart=on-failure
+ExecStart=/srv/sync/git-webhook-receiver.py -c /srv/sync/config.yaml
 
 [Install]
 WantedBy=multi-user.target

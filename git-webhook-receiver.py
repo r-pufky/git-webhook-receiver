@@ -131,6 +131,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         logging.error('Key %s not found in %s.', pconfig.COMMAND, args.cfg.name)
       elif err == pconfig.TOKEN:
         logging.error('Key %s not found in %s.', pconfig.TOKEN, args.cfg.name)
+      raise
 
     logging.info('Loaded project %s and run command %s.',
                  project,

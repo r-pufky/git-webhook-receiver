@@ -1,4 +1,4 @@
-# gitlab-webhook-receiver
+# git-webhook-receiver
 Simple git webhook receiver.
 
 ## Source
@@ -15,7 +15,7 @@ in the [configuration file](#example-config).
 
 ### Git Project Homepage
 The structure of the [configuration file](#example-config) requires the homepage
-of the gitlab project as key.
+of the git project as key.
 
 ### Command
 The command should be run after the hook was received.
@@ -52,15 +52,15 @@ Define the path to your configuration file. Default: **config.yaml**
 ## Run Script
 
 ```
-python gitlab-webhook-receiver.py --port 8080 --config /etc/hook.yaml
+python git-webhook-receiver.py --port 8080 --config /etc/hook.yaml
 ```
 
 
 ### Help
 ```
-usage: gitlab-webhook-receiver.py [-h] [-a ADDR] [-p PORT] [-c CFG]
+usage: git-webhook-receiver.py [-h] [-a ADDR] [-p PORT] [-c CFG]
 
-Gitlab Webhook Receiver
+Git Webhook Receiver
 
 optional arguments:
   -h, --help            show this help message and exit

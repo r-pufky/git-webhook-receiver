@@ -36,9 +36,9 @@ class ReceiverHeader(object):
     params: Dictionary of parsed JSON header content.
   """
   CONTENT_LENGTH = 'Content-Length'
-  TOKEN = 'X-Gitlab-Token'
-  PROJECT = 'project'
-  PROJECT_NAME = 'name'
+  TOKEN = 'secret'
+  PROJECT = 'repository'
+  PROJECT_NAME = 'html_url'
 
   def __init__(self):
     """ Initialize recieved headers. """
@@ -59,9 +59,9 @@ class ProjectConfig(object):
     token: String authorized token.
     foreground: Boolean True if command should be executed in the foreground.
   """
-  CONFIG_COMMAND = 'command'
-  CONFIG_TOKEN = 'gitlab_token'
-  CONFIG_BACKGROUND = 'background'
+  COMMAND = 'command'
+  TOKEN = 'secret'
+  BACKGROUND = 'background'
 
   def __init__(self):
     """ Initialize config. """
@@ -83,11 +83,20 @@ class RequestHandler(BaseHTTPRequestHandler):
       KeyError: if project name cannot be parsed from received headers.
     """
     headers = ReceiverHeader()
-    headers.token = self.headers[headers.TOKEN]
     headers.payload = self.rfile.read(int(self.headers[headers.CONTENT_LENGTH]))
 
     if len(headers.payload) > 0:
       headers.params = json.loads(headers.payload.decode('utf-8'))
+
+    # gitea has token in payload, not headers.
+    try:
+      headers.token = headers.params[headers.TOKEN]
+    except KeyError as err:
+      try:
+        headers.token = self.headers[headers.TOKEN]
+      except KeyError as err:
+        logging.error('Token not found.')
+        raise
 
     try:
       headers.project = headers.params[headers.PROJECT][headers.PROJECT_NAME]
